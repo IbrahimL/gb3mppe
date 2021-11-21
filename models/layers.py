@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 from tensorflow.keras import Model
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Layer
@@ -37,15 +36,17 @@ class EdgeConv(Layer):
     def _prep_features(self, Adjacency, node_features):
         '''
         '''
-        A_temp = Adjacency - np.eye(Adjacency.shape[-1])
-        Deg = np.sum(A_temp, axis=0).astype('int')
-        Feat_rep_n = np.repeat(node_features, Deg, axis=0)
-        Feat_rep_v = node_features[np.argwhere(A_temp==1)[:,1]]
+        A_temp = tf.cast(Adjacency, tf.int32) - tf.eye(Adjacency.shape[-1], dtype=tf.int32)
+        Deg = tf.reduce_sum(A_temp, axis=0)
+        Deg = tf.cast(Deg, tf.int32)
+        Feat_rep_n = tf.repeat(node_features, Deg, axis=0)
+        Feat_rep_v = tf.gather(node_features, tf.where(A_temp==1)[:,1])
         return Feat_rep_n, Feat_rep_v, Deg
 
-    def _convolution(self, Adjacency, node_features):
+    def _convolution(self, inputs):
         '''
         '''
+        Adjacency, node_features = inputs
         Feat_rep_n, Feat_rep_v, Deg = self._prep_features(Adjacency, node_features)
         res = tf.squeeze(tf.vectorized_map(self._aggregate, (Feat_rep_n, Feat_rep_v)))
         max_id = tf.vectorized_map(tf.norm, res)
@@ -58,9 +59,10 @@ class EdgeConv(Layer):
         return res_tensor
     
     def call(self, Adjacency, node_features):
-        '''
-        '''
-        pass
+        inputs = (Adjacency, node_features)
+        if len(Adjacency.shape) == 2:
+            return self._convolution(inputs)
+        return tf.vectorized_map(self._convolution, inputs)
 
 class EdgeConvE(Layer):
     '''
@@ -79,9 +81,18 @@ if __name__ == "__main__":
     h_dim = 4
     o_dim = 4
     mlp = MLP(h_dim, o_dim)
-    x = np.random.rand(10, 80)
+    x = tf.random.uniform((10, 80))
     # Test EdgeConv
     ec = EdgeConv(mlp)
-    A = np.array([[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]])
-    Feat = np.array([[1, 2],[2, 3], [4, 5], [5, 6]])
-    ec._convolution(A, Feat)
+    A = tf.convert_to_tensor([[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]])
+    Feat = tf.convert_to_tensor([[1, 2],[2, 3], [4, 5], [5, 6]])
+    print("test 1:")
+    print(ec(A, Feat))
+    # Test EdgeConv (Batch)
+    ec = EdgeConv(mlp)
+    A = tf.convert_to_tensor([[[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]], 
+                  [[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]]])
+    Feat = tf.convert_to_tensor([[[1, 2],[2, 3], [4, 5], [5, 6]],
+                     [[1, 2],[2, 3], [4, 5], [5, 6]]])
+    print("test 2")
+    print(ec(A, Feat))
