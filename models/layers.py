@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Layer
+from tensorflow.python.ops.gen_math_ops import Add
 
 class MLP(Model):
     '''
@@ -56,13 +57,22 @@ class EdgeConv(Layer):
         max_id = tf.vectorized_map(get_ind, max_id)
         res = tf.ragged.stack(res)
         res_tensor = tf.gather(res, max_id, batch_dims=1)
-        return res_tensor
+        return res_tensor.to_tensor()
     
     def call(self, Adjacency, node_features):
-        inputs = (Adjacency, node_features)
         if len(Adjacency.shape) == 2:
+            inputs = (Adjacency, node_features)
             return self._convolution(inputs)
-        return tf.vectorized_map(self._convolution, inputs)
+        
+        #return tf.vectorized_map(self._convolution, inputs)
+        res = [0]*Adjacency.shape[0]
+        for i in range(Adjacency.shape[0]):
+            # This works but might be slower
+            # idk why tf.vectorized_map didn't work
+            inputs = (Adjacency[i], node_features[i])
+            res[i] = self._convolution(inputs)
+        return tf.stack(res)
+            
 
 
 class EdgeConvE(Layer):
@@ -103,8 +113,12 @@ if __name__ == "__main__":
     # Test EdgeConv (Batch)
     ec = EdgeConv(mlp)
     A = tf.convert_to_tensor([[[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]], 
-                  [[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]]])
+                              [[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]]])
     Feat = tf.convert_to_tensor([[[1, 2],[2, 3], [4, 5], [5, 6]],
-                     [[1, 2],[2, 3], [4, 5], [5, 6]]])
+                                 [[1, 2],[2, 3], [4, 5], [5, 6]]])
+    '''
+    A = tf.convert_to_tensor([[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]])
+    Feat = tf.convert_to_tensor([[1, 2],[2, 3], [4, 5], [5, 6]])
+    '''
     print("test 2")
-    print(ec(A, Feat))
+    print(ec(A,Feat))
