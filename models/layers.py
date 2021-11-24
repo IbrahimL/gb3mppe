@@ -64,17 +64,29 @@ class EdgeConv(Layer):
             return self._convolution(inputs)
         return tf.vectorized_map(self._convolution, inputs)
 
+
 class EdgeConvE(Layer):
     '''
     '''
     def __init__(self, params):
         super(EdgeConvE, self).__init__()
-
+        
+    def _aggregate(self, inputs):
+        '''
+        '''
+        x_v, x_vp = inputs
+        return self.h_theta(tf.concat([x_v, x_vp-x_v,edge_attributes], -1))
+    
+    
     def build(self):
         pass
 
+    
     def call(self, Adjacency, node_features, edge_attributes):
-        pass
+        inputs = (Adjacency, node_features, edge_attributes)
+        if len(Adjacency.shape) == 2:
+            return self._convolution(inputs)
+        return tf.vectorized_map(self._convolution, inputs)
 
 if __name__ == "__main__":
     # Test MLP class
