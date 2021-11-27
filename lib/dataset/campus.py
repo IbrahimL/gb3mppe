@@ -101,60 +101,9 @@ class Campus(torch.utils.data.Dataset):
         # TODO-This will probably be replaced by graph generation function
         # we prbably need some function in utils.py to generate graphs 
         # do other image processing related functionalities
-        db = []
-        datafile = os.path.join(self.dataset_root, "actorsGT.mat")
-        data = scio.loadmat(datafile)
-        actor_3d = np.array(np.array(data["actor3D"].tolist()).tolist()).squeeze() # [Num_persons, Num_frames]
-        num_persons, num_frames = actor_3d.shape
-        
-        all_depths = []
-        for f in self.frame_range:
-            for cam_id, cam in self.cameras.items():
-                image_path = os.path.join("Camera{}".format(cam_id), "campus4-c{}-{:05d}.png".format(cam_id, f))
-                
-                all_poses_3d = []
-                all_poses_3d_vis = []
-                all_poses_2d = []
-                all_poses_2d_vis = []
-                
-                for pid in range(num_persons):
-                    pose3d = actor_3d[pid][f] * 1000.0
-                    if pose3d.size > 0:
-                        all_poses_3d.append(pose3d) # [N_joints, 3]
-                        all_poses_3d_vis.append(np.ones([self.num_joints])) # [Num_joints]
-                        
-                        # TODO - projection function ???! (3D - 2D) camera parameters matrix (shouldn't be hard)
-                        # in utils of the previous github
-                        pose2d, depth = prject_pose(pose3d, cam) # [Num_joints, 2], [Num_jjoints]
-                        all_depths.extend(depth.tolist())
-                        
-                        # the next part is to check if the projected pose is in the frame (I presume)
-                        x_check = np.bitwise_and(pose2d[:, 0] >= 0,
-                                                 pose2d[:, 0] <= self.image_width - 1)
-                        y_check = np.bitwise_and(pose2d[:, 1] >= 0,
-                                                 pose2d[:, 1] <= self.image_height - 1)
-                        check = np.bitwise_and(x_check, y_check)
-                        
-                        joints_2d_vis = np.ones([self.num_joints])
-                        joints_2d_vis[np.logical_not(check)] = 0
-                        all_poses_2d.append(pose2d) # [N_joints, 2]
-                        all_poses_2d_vis.append(joints_2d_vis) # [N_joints]
-                        
-                pred_index = "{}_{}".format(cam_id, f)
-                preds = self.pred_pose2d[pred_index]
-                preds = np.array([p["pred"] for p in preds]) #[Num_persons, N_joints_coco, 2+1]
-                
-                db.append({
-                    "image_path": os.path.join(self.dataset_root, image_path),
-                    "joints_3d": np.array(all_poses_3d),  # [Np, Nj, 3]
-                    "joints_3d_vis": np.array(all_poses_3d_vis),  # [Np, Nj] all one
-                    "joints_2d": np.array(all_poses_2d),  # [Np, Nj, 2]
-                    "joints_2d_vis": np.array(all_poses_2d_vis),  # [Np, Nj]
-                    "camera": cam,
-                    "pred_pose2d": preds,  # [Np_hrnet, Nj_coco, 2+1]
-                })
+        pass
 
-        return db
+        #return db
     
     def __len__(self):
         return len(self.db)
