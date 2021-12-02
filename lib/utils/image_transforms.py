@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import json
 
 @tf.function
 def tf_get_cam_params(camera):
@@ -7,10 +8,10 @@ def tf_get_cam_params(camera):
     T = tf.constant(camera['T'], dtype=tf.float32)
     fx = tf.constant(camera['fx'], dtype=tf.float32)
     fy = tf.constant(camera['fy'], dtype=tf.float32)
-    f = tf.stack([fx, fy], axis=-1).reshape(-1,2,1)
+    f = tf.reshape(tf.stack([fx, fy], axis=-1), (2,1))
     cx = tf.constant(camera['cx'], dtype=tf.float32)
     cy = tf.constant(camera['cy'], dtype=tf.float32)
-    c = tf.stack([cx, cy], axis=-1).reshape(-1,2,1)
+    c = tf.reshape(tf.stack([cx, cy], axis=-1), (2,1))
     k = tf.constant(camera['k'], dtype=tf.float32)
     p = tf.constant(camera['p'], dtype=tf.float32)
     return R, T, f, c, k, p
@@ -77,6 +78,10 @@ def tf_pose_2d_to_3d(points, depth, camera):
     return tf_point_2d_to_3d(points, R, T, f, c, k, p)
 
 if __name__ == "__main__":
-    pass
-    
+    f = open('../../data/Campus/calibration_campus.json')
+    data = json.load(f)['0'] # Camera 1
+    print(data)
+    R, T, f, c, k, p = tf_get_cam_params(data)
+    print(f)
+
     
