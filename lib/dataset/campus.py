@@ -108,6 +108,29 @@ class Campus(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.db)
     
+    
+    
+    def coco2campus3D(coco_pose):
+        """
+        transform coco order 3d pose to campus dataset order with interpolation
+        :param coco_pose: np.array with shape 17x3
+        :return: 3D pose in campus order with shape 14x3
+        """
+     #   campus_pose = np.zeros((14, 3))
+        coco2campus = np.array([16, 14, 12, 11, 13, 15, 10, 8, 6, 5, 7, 9])
+        campus_pose = coco_pose[coco2campus]
+
+        mid_sho = (coco_pose[5] + coco_pose[6]) / 2  # L and R shoulder
+        head_center = (coco_pose[3] + coco_pose[4]) / 2  # middle of two ear
+        head_bottom = (mid_sho + head_center) / 2  # nose and head center
+        head_top = head_bottom + (head_center - head_bottom) * 2
+
+        campus_pose = np.insert(campus_pose, 12 ,head_bottom , axis = 0 )
+        campus_pose = np.insert(campus_pose, 13 ,head_top , axis = 0 )
+
+
+        return campus_pose
+
     def __getitem__(self, idx):
         pass
     
