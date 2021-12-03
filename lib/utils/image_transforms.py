@@ -3,6 +3,9 @@ import tensorflow as tf
 import json
 
 @tf.function
+
+
+@tf.function
 def tf_get_cam_params(camera):
     R = tf.constant(camera['R'], dtype=tf.float32)
     T = tf.constant(camera['T'], dtype=tf.float32)
@@ -16,33 +19,40 @@ def tf_get_cam_params(camera):
     p = tf.constant(camera['p'], dtype=tf.float32)
     return R, T, f, c, k, p
 
-@tf.function
-def tf_point_3d_to_2d(points, R, T, f, c, k, p):
-    B, Np, Nj, Nd = points.shape # [batch_size, Number of persons, Number of joints, Dimension]
-    
-    points = points.reshape(B, -1, 3).transpose(1, 2) # [B, Np*Nj, Nd] --> [B, Nd, Np*Nj]
-    
-    points_cam = tf.matmul(R, points - T) # Translation + Rotation
-    out = points_cam[:, :2, :]/(points_cam[:, 2:, :] + 1e-5) # devision by depth (and avoiding division by 0)
-    
-    # Camera distortion
-    r = tf.reduce_sum(out ** 2, axis=1) # [B, Np*Nj]
-    d = 1 + k[:, 0] * r + k[:, 1] * (r ** 2) + k[:, 2] * (r ** 3)
-    u = out[:, 0, :] * d + 2 * p[:, 0] * out[:, 0, :] * out[:, 1, :] + p[:, 1] * (r + 2 * out[:, 0, :] * out[:, 0, :])  # [B, Np*Nj]
-    v = out[:, 1, :] * d + 2 * p[:, 1] * out[:, 0, :] * out[:, 1, :] + p[:, 0] * (r + 2 * out[:, 1, :] * out[:, 1, :])  # [B, Np*Nj]
-    out = tf.stack([u, v], axis=1)
-    
-    out_pixel = f * out + c # [B, 2, Np*Nj]
-    out_pixel = out_pixel.transpose(1, 2) # [B, Np*Nj, 2]
-    
-    # get back the original shape
-    out_pixel = out_pixel.reshape(B, Np, Nj, 2) # [B, Np, Nj, 2]
-    return out_pixel
 
 @tf.function
-def tf_pose_3d_to_2d(points, camera):
-    R, T, f, c, k, p = tf_get_cam_params(points, camera)
-    return tf_point_3d_to_2d(points, R, T, f, c, k, p)
+def tf_point_3d_to_2d(points, R, T, f, c, k, p):
+    #   B, Np, Nj, Nd = points.shape # [batch_size, Number of persons, Number of joints, Dimension]
+    # points = points.reshape(B, -1, 3).transpose(1, 2) # [B, Np*Nj, Nd] --> [B, Nd, Np*Nj]
+    
+    # histoire de tester ....
+    Np = 1
+    Nj=17  # To edit ?
+    B=1
+    Nd=3
+    
+    points_cam = tf.tensordot(R, tf.transpose(points)- T,axes=1) # Translation + Rotation
+
+    out = points_cam[:2]/(points_cam[2] + 1e-5) # devision by depth (and avoiding division by 0)
+    # Camera distortion
+    r2 = tf.reduce_sum(out ** 2, axis=0,keepdims=True) # [B, Np*Nj]
+    r2exp = tf.concat([r2,r2**2,r2**3], axis=0, name='concat')
+    kexp = tf.tile(k,(1,Nj))
+    radial = 1 + tf.einsum('ij,ij->j', kexp, r2exp)
+    tan = p[0] * out[1] + p[1] * out[0]
+    cor=(radial + 2 * tan)
+    corr=tf.repeat([cor,cor],repeats=[1 for i in range(Nj)], axis=-1)
+    conca =tf.tensordot(tf.reshape(tf.concat([p[1],p[0]], axis = -1), [-1]) , tf.reshape(r2 ,[-1]),axes=0) 
+    out = out * corr + conca
+    out_pixel = (f * out) + c
+    return out_pixel
+
+
+@tf.function
+def tf_pose_3d_to_2d(x, camera):
+    R, T, f, c, k, p = tf_get_cam_params (camera)
+    return tf_point_3d_to_2d (x, R, T, f, c, k, p)
+
 
 @tf.function
 def tf_point_2d_to_3d(points, depth, R, T, f, c, k, p):
@@ -76,6 +86,8 @@ def tf_point_2d_to_3d(points, depth, R, T, f, c, k, p):
 def tf_pose_2d_to_3d(points, depth, camera):
     R, T, f, c, k, p = tf_get_cam_params(points, depth, camera)
     return tf_point_2d_to_3d(points, R, T, f, c, k, p)
+    
+    
 
 if __name__ == "__main__":
     f = open('../../data/Campus/calibration_campus.json')
