@@ -2,11 +2,8 @@
 def fundamental_matrix_from_projections(P1, P2):
     """
     Get the Fundamental matrix from Projection matrices P1 & P2
-    Adapted from 
-    [
-    https://kornia.readthedocs.io/en/latest/_modules/kornia/geometry/epipolar
-    /_metrics.html#sampson_epipolar_distance
-    ]
+    Adapted from :
+    [ https://kornia.readthedocs.io/en/latest/_modules/kornia/geometry/epipolar/fundamental.html ]
     
     """
     def vstack(x, y):
@@ -39,9 +36,31 @@ def fundamental_matrix_from_projections(P1, P2):
 
     return tf.reshape(F_vec,shape=(*P1.shape[:-2],3,3))
     
+
+
+
+
+def tf_convert_points_to_homogeneous(points):
+    """Function that converts points from Euclidean to homogeneous space.
+
+    See :class:`~torchgeometry.ConvertPointsToHomogeneous` for details.
+
+    Examples::
+
+        >>> input = torch.rand(2, 4, 3)  # BxNx3
+        >>> output = tgm.convert_points_to_homogeneous(input)  # BxNx4
+    """
+    if not tf.is_tensor(points):
+        raise TypeError("Input type is not a tf.Tensor. Got {}".format(
+            type(points)))
+    if len(points.shape) < 2:
+        raise ValueError("Input must be at least a 2D tensor. Got {}".format(
+            points.shape))
+    paddings = tf.constant([[0,0], [0,1]])
     
-    
- 
+    return tf.pad(points, paddings, mode='CONSTANT', constant_values=1)
+
+
 
 def tf_symmetrical_epipolar_distance(pts1,pts2,Fm, squared, eps) : 
     """
@@ -56,25 +75,30 @@ def tf_symmetrical_epipolar_distance(pts1,pts2,Fm, squared, eps) :
         raise ValueError(f"Fm must be a (*, 3, 3) tensor. Got {Fm.shape}")
 
         ###########Acompleter
- #   if pts1.size(-1) == 2:
- #       pts1 = convert_points_to_homogeneous(pts1)
+    if pts1.size(-1) == 2:
+        pts1 = tf_convert_points_to_homogeneous(pts1)
 
- #   if pts2.size(-1) == 2:
-  #      pts2 = convert_points_to_homogeneous(pts2)
-
+    if pts2.size(-1) == 2:
+        pts2 = tf_convert_points_to_homogeneous(pts2)
 
     # From Hartley and Zisserman, symmetric epipolar distance (11.10)
     # sed = (x'^T F x) ** 2 /  (((Fx)_1**2) + (Fx)_2**2)) +  1/ (((F^Tx')_1**2) + (F^Tx')_2**2))
     # Instead we can just transpose F once and switch the order of multiplication
+    
     F_t = tf.transpose(Fm, perm=(0,2,1), conjugate=False, name='permute')
     line1_in_2 = pts1 @ F_t
     line2_in_1 = pts2 @ Fm
 
     # numerator = (x'^T F x) ** 2
+    #numerator  = (pts2 * line1_in_2).sum(2).pow(2)
     numerator  = tf.pow(tf.math.reduce_sum((pts2 * line1_in_2),2),2)
 
 
-    # denominator_inv =  1/ (((Fx)_1**2) + (Fx)_2**2)) +  1/ (((F^Tx')_1**2) + (F^Tx')_2**2))    
+    # denominator_inv =  1/ (((Fx)_1**2) + (Fx)_2**2)) +  1/ (((F^Tx')_1**2) + (F^Tx')_2**2))
+    denominator_inv = 1.0 / (line1_in_2[..., :2].norm(2, dim=2).pow(2)) + 1.0 / (
+        line2_in_1[..., :2].norm(2, dim=2).pow(2)
+    )
+    
     denominator_inv = 1.0 / (tf.pow(tf.norm(line1_in_2[..., :2],axis=2),2)) + 1.0 / (
         tf.pow(tf.norm(line2_in_1[..., :2],axis=2),2)
     )
@@ -83,6 +107,7 @@ def tf_symmetrical_epipolar_distance(pts1,pts2,Fm, squared, eps) :
     if squared:
         return out
     return tf.math.sqrt(out + eps)
+
 
 if __name__ == "__main__":
 
