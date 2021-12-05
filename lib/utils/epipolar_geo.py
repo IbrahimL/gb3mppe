@@ -41,7 +41,49 @@ def fundamental_matrix_from_projections(P1, P2):
     
     
     
+ 
+
+def tf_symmetrical_epipolar_distance(pts1,pts2,Fm, squared, eps) : 
+    """
+    Return symmetrical epipolar distance for correspondences given the fundamental matrix.
+
+    """
     
+    if not isinstance(Fm, tf.Tensor):
+        raise TypeError(f"Fm type is not a torch.Tensor. Got {type(Fm)}")
+
+    if (len(Fm.shape) != 3) or not Fm.shape[-2:] == (3, 3):
+        raise ValueError(f"Fm must be a (*, 3, 3) tensor. Got {Fm.shape}")
+
+        ###########Acompleter
+ #   if pts1.size(-1) == 2:
+ #       pts1 = convert_points_to_homogeneous(pts1)
+
+ #   if pts2.size(-1) == 2:
+  #      pts2 = convert_points_to_homogeneous(pts2)
+
+
+    # From Hartley and Zisserman, symmetric epipolar distance (11.10)
+    # sed = (x'^T F x) ** 2 /  (((Fx)_1**2) + (Fx)_2**2)) +  1/ (((F^Tx')_1**2) + (F^Tx')_2**2))
+    # Instead we can just transpose F once and switch the order of multiplication
+    F_t = tf.transpose(Fm, perm=(0,2,1), conjugate=False, name='permute')
+    line1_in_2 = pts1 @ F_t
+    line2_in_1 = pts2 @ Fm
+
+    # numerator = (x'^T F x) ** 2
+    numerator  = tf.pow(tf.math.reduce_sum((pts2 * line1_in_2),2),2)
+
+
+    # denominator_inv =  1/ (((Fx)_1**2) + (Fx)_2**2)) +  1/ (((F^Tx')_1**2) + (F^Tx')_2**2))    
+    denominator_inv = 1.0 / (tf.pow(tf.norm(line1_in_2[..., :2],axis=2),2)) + 1.0 / (
+        tf.pow(tf.norm(line2_in_1[..., :2],axis=2),2)
+    )
+    
+    out = numerator * denominator_inv
+    if squared:
+        return out
+    return tf.math.sqrt(out + eps)
+
 if __name__ == "__main__":
 
 	P2=tf.constant([[162.36,-438.34,-17.508,3347.4],[73.3,-10.043,-443.34,1373.5],[0.99035,-0.047887,-0.13009,6.6849]])
