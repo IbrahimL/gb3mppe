@@ -29,8 +29,9 @@ class MLP(Model):
 def edge_convolution_E_template(data, neighbors, edges_features, sizes, edge_function, reduction, edge_function_kwargs, name="Layer_E"):
   with tf.name_scope(name):
     data = tf.convert_to_tensor(value=data)
-    edges_features = tf.convert_to_tensor(value=edges_features)
+    edges_features = tf.compat.v1.convert_to_tensor_or_sparse_tensor(value=edges_features)
     neighbors = tf.compat.v1.convert_to_tensor_or_sparse_tensor(value=neighbors)
+    B, V, _, C = edges_features.shape
     if sizes is not None:
       sizes = tf.convert_to_tensor(value=sizes)
 
@@ -48,15 +49,18 @@ def edge_convolution_E_template(data, neighbors, edges_features, sizes, edge_fun
     else:
       x_flat = data
       adjacency = neighbors
-
     adjacency_ind_0 = adjacency.indices[:, 0]
     adjacency_ind_1 = adjacency.indices[:, 1]
     vertex_features = tf.gather(x_flat, adjacency_ind_0)
     neighbor_features = tf.gather(x_flat, adjacency_ind_1)
-    edge_features = tf.gather(edges_features, [adjacency_ind_0, adjacency_ind_1])
+    edge_att_ind_0 = adjacency_ind_0 // V
+    edge_att_ind_1 = adjacency_ind_0 % V
+    edge_att_ind_2 = adjacency_ind_1 % V
+    edges_indices = tf.convert_to_tensor([edge_att_ind_0, edge_att_ind_1, edge_att_ind_2], dtype=tf.int32)
+    edges_indices = tf.transpose(edges_indices, perm=[1,0])
+    edge_features = tf.gather_nd(edges_features, edges_indices)
     output = edge_function(vertex_features, neighbor_features, edge_features,
                                   **edge_function_kwargs)
-
     if reduction == "weighted":
       output_weighted = output * tf.expand_dims(
           adjacency.values, -1)
@@ -130,14 +134,15 @@ if __name__ == "__main__":
     # Test MLP class
     h_dim = 4
     o_dim = 8
-    mlp = MLP(h_dim, o_dim)
+    mlp_1 = MLP(h_dim, o_dim)
     x = tf.random.uniform((10, 80))
     # Test EdgeConv (Batch)
-    ec = EdgeConv(mlp)
+    ec = EdgeConv(mlp_1)
     A = tf.convert_to_tensor([[[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]], 
                               [[1, 0, 1, 0],[0, 1, 1, 1],[1, 1, 1, 0],[0, 1, 0, 1]]], dtype=tf.float32)
     A = tf.sparse.from_dense(A)
-    edge_att = tf.random.uniform([2,4,4,3])
+    edge_att = tf.convert_to_tensor([[[[1,1], [0,0], [1,1], [0,0]],[[0,0], [1,1], [1,1], [1,1]],[[1,1], [1,1], [1,1], [0,0]],[[0,0], [1,1], [0,0], [1,1]]], 
+                              [[[1,1], [0,0], [1,1], [0,0]],[[0,0], [1,1], [1,1], [1,1]],[[1,1], [1,1], [1,1], [0,0]],[[0,0], [1,1], [0,0], [1,1]]]], dtype=tf.float32)
     Feat = tf.convert_to_tensor([[[1, 2, 6],[2, 3, 2], [4, 5, 10], [5, 6, -1]],
                                  [[1, 2, -3],[2, 3, 0.5], [4, 5, -9], [5, 6, 0]]], dtype=tf.float32)
     
@@ -146,7 +151,8 @@ if __name__ == "__main__":
     print('node features:', Feat.shape)
     print('output:', ec(A,Feat).shape)
     ### TEST EDGE CONV E
-    ece = EdgeConvE(mlp)
+    mlp_2 = MLP(h_dim, o_dim)
+    ece = EdgeConvE(mlp_2)
     print("test Edge Convolution-E")
     print('adjacency:', A.shape)
     print('node features:', Feat.shape)
