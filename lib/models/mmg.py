@@ -15,9 +15,9 @@ class MMG(Model):
         self.linear_hid3    = layers.Dense(hidden_dim[2], activation='relu')
         self.linear_out     = layers.Dense(output_dim, activation='sigmoid')
     
-    def call(self, ajacency, node_features, edge_attributes):
-        x = self.EdgeConvE_hid1(ajacency, node_features, edge_attributes)
-        x = self.EdgeConvE_hid2(ajacency, x, edge_attributes)
+    def call(self, adjacency, node_features, edge_attributes):
+        x = self.EdgeConvE_hid1(adjacency, node_features, edge_attributes)
+        x = self.EdgeConvE_hid2(adjacency, x, edge_attributes)
         x = self.linear_hid3(x)
         x = self.linear_out(x)
         return x
