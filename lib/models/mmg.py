@@ -8,7 +8,7 @@ from .layers import EdgeConvE, MLP
 class MMG(Model):
     '''
     '''
-    def __init__(self):
+    def __init__(self, hidden_dim, output_dim):
         super(MMG, self).__init__()
         self.EdgeConvE_hid1 = EdgeConvE(MLP(hidden_dim[0], hidden_dim[0]))
         self.EdgeConvE_hid2 = EdgeConvE(MLP(hidden_dim[1], hidden_dim[0]))
