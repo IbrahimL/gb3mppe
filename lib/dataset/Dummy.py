@@ -33,14 +33,35 @@ class Dummy:
         edge_feat_mats = tf.random.uniform(shape=[self.n_samples, self.n_nodes, self.n_nodes, self.edge_feat_dim],
                                       minval=0, maxval=1, dtype=tf.float32)
         return edge_feat_mats
+    
+    @tf.function
+    def _get_coordinates(self):
+        return tf.random.uniform(shape=[self.n_samples, self.n_nodes, 3], minval=0, maxval=100, dtype=tf.float32)
+    
+    @tf.function
+    def _get_center_scores(self):
+        return tf.random.uniform(shape=[self.n_samples, self.n_nodes, 1], minval=0, maxval=1, dtype=tf.float32)
 
+    @tf.function
+    def _get_joint_type(self):
+        output = np.zeros([self.n_samples, self.n_nodes, 15])
+        output[np.random.randint(0, 15)]
+        return tf.convert_to_tensor(output) 
+    
     def _get_db(self):
         adj_mats = self._get_adjacency()
         n_feat_mats = self._get_node_features()
         e_feat_mats = self._get_edge_features()
+        coordinates = self._get_coordinates()
+        center_scores = self._get_center_scores()
+        joint_types = self._get_joint_type()
         db = {"adjacency": adj_mats,
               "node_features": n_feat_mats,
-              "edge_features": e_feat_mats}
+              "edge_features": e_feat_mats,
+              "coordinates": coordinates,
+              "center_scores": center_scores,
+              "joint_types": joint_types
+              }
         return db
         
     def __len__(self):

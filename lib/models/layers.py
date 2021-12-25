@@ -77,8 +77,6 @@ class MLP(Model):
         self.linear_out = layers.Dense(output_dim, activation='relu')
     
     def call(self, input):
-        if len(input.shape) == 1:
-            input = tf.expand_dims(input, axis=0)
         x = self.linear_hid1(input)
         x = self.linear_hid2(x)
         x = self.linear_out(x)
