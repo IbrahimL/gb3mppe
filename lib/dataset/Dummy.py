@@ -19,7 +19,8 @@ class Dummy:
         adj_mats = upper_tr + np.transpose(upper_tr, axes=(0,2,1))
         if self.self_loops:
             adj_mats += np.eye(self.n_nodes, dtype=int)
-        return tf.convert_to_tensor(adj_mats, dtype=tf.int8)
+        output =  tf.convert_to_tensor(adj_mats, dtype=tf.float32)
+        return tf.sparse.from_dense(output)
     
     @tf.function
     def _get_node_features(self):
