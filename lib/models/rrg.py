@@ -14,6 +14,7 @@ class RRG(Model):
         super(RRG, self).__init__()
         self.linear_hid1    = layers.Dense(hidden_dim[0], activation='relu')
         self.linear_hid2    = layers.Dense(hidden_dim[1], activation='relu')
+        self.concatenate_layer = layers.Concatenate(axis=-1)
         self.EdgeConvE_hid1 = EdgeConvE(MLP(mlp_dim[0], mlp_dim[0]))
         self.EdgeConvE_hid1 = EdgeConvE(MLP(mlp_dim[1], mlp_dim[1]))
         # a verifier
@@ -27,18 +28,17 @@ class RRG(Model):
         self.linear_hid5    = layers.Dense(hidden_dim[4], activation='relu')
         self.linear_out2    = layers.Dense(output_dim[1], activation='relu')
     
-    def call(self, input):
-        [Coordinate3D, Feature512D, JointType] = input
-        x1 = self.linear_hid1(Coordinate3D)
+    def call(self, coordinates, adjacency, node_features, edge_features, joint_types):
+        x1 = self.linear_hid1(coordinates)
         x1 = self.linear_hid2(x1)
-        x1 = layers.concatenate()[x1,Feature512D,JointType]
-        x1 = self.EdgeConvE_hid1(x1)
-        x1 = self.EdgeConvE_hid1(x1)
+        x1 = self.concatenate_layer([x1, node_features, joint_types])
+        x1 = self.EdgeConvE_hid1(adjacency, x1, edge_features)
+        x1 = self.EdgeConvE_hid1(adjacency, x1, edge_features)
         x1 = self.MaxPool_hid1(x1)
         x1 = self.linear_hid3(x1)
-        x1 = self.EdgeConv_hid1(x1)
+        x1 = self.EdgeConv_hid1(adjacency, x1)
         EdgeConv1_ouput = x1
-        x1 = self.EdgeConv_hid2(x1)
+        x1 = self.EdgeConv_hid2(adjacency, x1)
         EdgeConv2_ouput = x1
         x1 = add([x1,EdgeConv1_ouput])
         x1 = self.EdgeConv_hid3(x1)
@@ -48,7 +48,7 @@ class RRG(Model):
         x1 = self.linear_out1(x1)   
         x2 = self.linear_out2(x2)  
         x2 = self.linear_out2(x2)
-        return x,x2
+        return x1,x2
 
     @tf.function
     def train_step(data, labels):
