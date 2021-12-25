@@ -1,5 +1,6 @@
 from functools import reduce
 from typing import Any, Callable, Dict
+import tensorflow_graphics
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras import layers
@@ -158,5 +159,4 @@ if __name__ == "__main__":
     print('node features:', Feat.shape)
     print('edge attributes:', edge_att.shape)
     print('output:', ece(A,Feat,edge_att).shape)
-    
     
