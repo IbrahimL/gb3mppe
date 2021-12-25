@@ -8,23 +8,6 @@ from tensorflow_graphics.geometry.convolution.graph_convolution import edge_conv
 from tensorflow_graphics.geometry.convolution import utils
 from tensorflow.python.ops.gen_math_ops import Add
 
-class MLP(Model):
-    '''
-    '''
-    def __init__(self, hidden_dim, output_dim):
-        super(MLP, self).__init__()
-        self.linear_hid1 = layers.Dense(hidden_dim, activation='relu')
-        self.linear_hid2 = layers.Dense(hidden_dim, activation='relu')
-        self.linear_out = layers.Dense(output_dim, activation='relu')
-    
-    def call(self, input):
-        if len(input.shape) == 1:
-            input = tf.expand_dims(input, axis=0)
-        x = self.linear_hid1(input)
-        x = self.linear_hid2(x)
-        x = self.linear_out(x)
-        return x
- 
 #https://github.com/tensorflow/graphics/blob/master/tensorflow_graphics/geometry/convolution/graph_convolution.py   
 def edge_convolution_E_template(data, neighbors, edges_features, sizes, edge_function, reduction, edge_function_kwargs, name="Layer_E"):
   with tf.name_scope(name):
@@ -83,6 +66,22 @@ def edge_convolution_E_template(data, neighbors, edges_features, sizes, edge_fun
       features = unflatten(features)
     return features
 
+class MLP(Model):
+    '''
+    '''
+    def __init__(self, hidden_dim, output_dim):
+        super(MLP, self).__init__()
+        self.linear_hid1 = layers.Dense(hidden_dim, activation='relu')
+        self.linear_hid2 = layers.Dense(hidden_dim, activation='relu')
+        self.linear_out = layers.Dense(output_dim, activation='relu')
+    
+    def call(self, input):
+        if len(input.shape) == 1:
+            input = tf.expand_dims(input, axis=0)
+        x = self.linear_hid1(input)
+        x = self.linear_hid2(x)
+        x = self.linear_out(x)
+        return x
 
 class EdgeConv(Layer):
     def __init__(self, h_theta):
