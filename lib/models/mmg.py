@@ -27,7 +27,7 @@ class MMG(Model):
     
 
     @tf.function
-    def train_step(data, labels):
+    def train_step(self, data, labels):
         '''
         '''
         with tf.GradientTape() as tape:
