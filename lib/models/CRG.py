@@ -12,6 +12,10 @@ class CRG(Model):
     '''
     def __init__(self, mlp_dim, hidden_dim, output_dim):
         super(CRG, self).__init__()
+        # training 
+        self.loss_object = tf.keras.losses.MeanSquaredError(reduction="auto", name="mean_squared_error")
+        self.adam = tf.keras.optimizers.Adam(learning_rate=1e-4,name='Adam')
+        #
         self.linear_hid1    = layers.Dense(hidden_dim[0], activation='relu')
         self.linear_hid2    = layers.Dense(hidden_dim[1], activation='relu')
         self.concatenate_layer = layers.Concatenate(axis=-1)
@@ -38,12 +42,22 @@ class CRG(Model):
         return x
 
     @tf.function
-    def train_step(data, labels):
+    def train_step(self, data, labels):
         '''
         '''
-        pass
+        with tf.GradientTape() as tape:
+            # forward pass
+            predictions = MMG(data)
+            loss = self.loss_object(labels, predictions)
+        # calcul des gradients
+        gradient = tape.gradient(loss, MMG.trainable_variables)
+        # retropropagation
+        self.adam.apply_gradients(zip(gradient, MMG.trainable_variables))
 
-    def train_loop(EPOCHS,train_ds):
+    @tf.function
+    def train_loop(self,train_ds,EPOCHS=2):
         '''
         '''
-        pass
+        for epoch in range(EPOCHS):
+            for data, labels in train_ds:
+                self.train_step(data, labels)

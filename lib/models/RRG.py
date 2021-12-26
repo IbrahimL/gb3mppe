@@ -12,6 +12,10 @@ class RRG(Model):
     '''
     def __init__(self, mlp_dim, hidden_dim, output_dim):
         super(RRG, self).__init__()
+        # Training
+        self.adam = tf.keras.optimizers.Adam(learning_rate=5*1e-5,name='Adam')
+        self.loss_object=tf.keras.losses.MeanAbsoluteError(reduction="auto", name="mean_absolute_error")
+        #
         self.linear_hid1    = layers.Dense(hidden_dim[0], activation='relu')
         self.linear_hid2    = layers.Dense(hidden_dim[1], activation='relu')
         self.concatenate_layer = layers.Concatenate(axis=-1)
@@ -27,6 +31,7 @@ class RRG(Model):
         self.linear_out1    = layers.Dense(output_dim[0], activation='relu')
         self.linear_hid5    = layers.Dense(hidden_dim[4], activation='relu')
         self.linear_out2    = layers.Dense(output_dim[1], activation='relu')
+
     def call(self, coordinates, adjacency, node_features, edge_features, joint_types):
         x1 = self.linear_hid1(coordinates)
         x1 = self.linear_hid2(x1)
@@ -50,12 +55,22 @@ class RRG(Model):
         return x1,x2
 
     @tf.function
-    def train_step(data, labels):
+    def train_step(self, data, labels):
         '''
         '''
-        pass
+        with tf.GradientTape() as tape:
+            # forward pass
+            predictions = MMG(data)
+            loss = self.loss_object(labels, predictions)
+        # calcul des gradients
+        gradient = tape.gradient(loss, MMG.trainable_variables)
+        # retropropagation
+        self.adam.apply_gradients(zip(gradient, MMG.trainable_variables))
 
-    def train_loop(EPOCHS,train_ds):
+    @tf.function
+    def train_loop(self,train_ds,EPOCHS=4):
         '''
         '''
-        pass
+        for epoch in range(EPOCHS):
+            for data, labels in train_ds:
+                self.train_step(data, labels)

@@ -10,6 +10,10 @@ class MMG(Model):
     '''
     def __init__(self, hidden_dim, output_dim):
         super(MMG, self).__init__()
+        # pour le training 
+        self.loss_object = tf.keras.losses.BinaryCrossentropy()
+        self.adam = tf.keras.optimizers.Adam(learning_rate=1e-4,name='Adam')
+        #
         self.EdgeConvE_hid1 = EdgeConvE(MLP(hidden_dim[0], hidden_dim[0]))
         self.EdgeConvE_hid2 = EdgeConvE(MLP(hidden_dim[1], hidden_dim[0]))
         self.linear_hid3    = layers.Dense(hidden_dim[2], activation='relu')
@@ -35,8 +39,9 @@ class MMG(Model):
         gradient = tape.gradient(loss, MMG.trainable_variables)
         # retropropagation
         self.adam.apply_gradients(zip(gradient, MMG.trainable_variables))
+
     @tf.function
-    def train_loop(self,train_ds,EPOCHS=2):
+    def train_loop(self,train_ds,EPOCHS=4):
         '''
         '''
         for epoch in range(EPOCHS):
