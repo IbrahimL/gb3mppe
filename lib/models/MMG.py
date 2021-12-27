@@ -33,28 +33,30 @@ class MMG(Model):
         x = self._feat_concat(x)
         x = self.linear_hid3(x)
         x = self.linear_out(x)
-        return x
+        # je ne peux pas récuperer adjacency.shape !! 
+        return tf.reshape(x,(edge_attributes.shape[0:3]))
     
 
     @tf.function
-    def train_step(self, data, labels):
+    def train_step(self, data, connectivity_target):
         '''
         '''
+        adjacency, node_features, edge_attributes = data[0],data[1],data[2]
         with tf.GradientTape() as tape:
             # forward pass
-            predictions = MMG(data)
-            loss = self.loss_object(labels, predictions)
+            predictions = self.call(adjacency, node_features,
+                                    edge_attributes)
+            loss = self.loss_object(connectivity_target,predictions)
         # calcul des gradients
-        gradient = tape.gradient(loss, MMG.trainable_variables)
+        gradient = tape.gradient(loss, self.trainable_variables)
         # retropropagation
-        self.adam.apply_gradients(zip(gradient, MMG.trainable_variables))
+        self.adam.apply_gradients(zip(gradient, self.trainable_variables))
 
     @tf.function
     def train_loop(self,train_ds,EPOCHS=4):
         '''
         '''
         for epoch in range(EPOCHS):
-            for data, labels in train_ds:
-                self.train_step(data, labels)
+            for data, connect_target in train_ds:
+                self.train_step(data, connect_target)
 
-    
