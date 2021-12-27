@@ -3,7 +3,7 @@ from tensorflow.keras import Model
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.layers import add
-from .layers import EdgeConvE, EdgeConv, GlobalMaxPool
+from .layers import EdgeConvE, EdgeConv
 from .layers import MLP
 
 
@@ -22,7 +22,7 @@ class RRG(Model):
         self.EdgeConvE_hid1 = EdgeConvE(MLP(mlp_dim[0], mlp_dim[0]))
         self.EdgeConvE_hid2 = EdgeConvE(MLP(mlp_dim[1], mlp_dim[1]))
  #       self.MaxPool_hid1   = layers.MaxPool2D(mlp_dim[1])
-        self.MaxPool_hid1   = GlobalMaxPool()
+    #    self.MaxPool_hid1   = GlobalMaxPool()
         self.linear_hid3    = layers.Dense(hidden_dim[2], activation='relu')
         self.EdgeConv_hid1  = EdgeConv(MLP(mlp_dim[2], mlp_dim[2]))
         self.EdgeConv_hid2  = EdgeConv(MLP(mlp_dim[3], mlp_dim[3]))
@@ -38,7 +38,7 @@ class RRG(Model):
         x1 = self.concatenate_layer([x1, node_features, joint_types])
         x1 = self.EdgeConvE_hid1(adjacency, x1, edge_features)
         x1 = self.EdgeConvE_hid2(adjacency, x1, edge_features)
-        x1 = self.MaxPool_hid1(x1)
+     #   x1 = self.MaxPool_hid1(x1)
         x1 = self.linear_hid3(x1)
         x1 = self.EdgeConv_hid1(adjacency, x1)
         EdgeConv1_ouput = x1
