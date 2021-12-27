@@ -6,6 +6,7 @@ from tensorflow.keras import Model
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Layer
 from tensorflow_graphics.geometry.convolution.graph_convolution import edge_convolution_template
+from tensorflow_graphics.geometry.convolution.graph_pooling import pool
 from tensorflow_graphics.geometry.convolution import utils
 from tensorflow.python.ops.gen_math_ops import Add
 from tensorflow.keras import backend as K
@@ -129,49 +130,12 @@ class EdgeConvE(Layer):
                                          name='edge_conv')
     
 
-class GlobalMaxPool(Layer):
-    '''
-    '''
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.pooling_op = tf.math.segment_max
-        self.batch_pooling_op = tf.reduce_max
-
-    def build(self, input_shape):
-        if isinstance(input_shape, list) and len(input_shape) == 2:
-            self.data_mode = "disjoint"
-        else:
-            if len(input_shape) == 2:
-                self.data_mode = "single"
-            else:
-                self.data_mode = "batch"
-        super().build(input_shape)
-
-    def call(self, inputs):
-        if self.data_mode == "disjoint":
-            X = inputs[0]
-            I = inputs[1]
-            if K.ndim(I) == 2:
-                I = I[:, 0]
-        else:
-            X = inputs
-
-        if self.data_mode == "disjoint":
-            return self.pooling_op(X, I)
-        else:
-            return self.batch_pooling_op(
-                X, axis=-2, keepdims=(self.data_mode == "single")
-            )
-
-    def compute_output_shape(self, input_shape):
-        if self.data_mode == "single":
-            return (1,) + input_shape[-1:]
-        elif self.data_mode == "batch":
-            return input_shape[:-2] + input_shape[-1:]
-        else:
-            # Input shape is a list of shapes for X and I
-            return input_shape[0]
-
+class GraphMaxPool(Layer):
+    def __init__(self):
+        super(GraphMaxPool, self).__init__()
+        
+    def call(self, Adjacency, node_features):
+        pass
 
 if __name__ == "__main__":
     import numpy as np

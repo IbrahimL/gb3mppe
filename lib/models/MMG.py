@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Layer
+import sys
 from .layers import EdgeConvE, MLP
 
 
@@ -19,9 +20,17 @@ class MMG(Model):
         self.linear_hid3    = layers.Dense(hidden_dim[2], activation='relu')
         self.linear_out     = layers.Dense(output_dim, activation='sigmoid')
     
+    def _feat_concat(self, features):
+        B, V, C = features.shape
+        feat_source = tf.reshape(tf.repeat(features, V, axis=0), shape=[B, V*V, C])
+        feat_target = tf.reshape(tf.repeat(features, V, axis=1), shape=[B, V*V, C])
+        feat = tf.concat([feat_source, feat_target], axis=-1)
+        return feat
+    
     def call(self, adjacency, node_features, edge_attributes):
         x = self.EdgeConvE_hid1(adjacency, node_features, edge_attributes)
         x = self.EdgeConvE_hid2(adjacency, x, edge_attributes)
+        x = self._feat_concat(x)
         x = self.linear_hid3(x)
         x = self.linear_out(x)
         return x
@@ -48,3 +57,4 @@ class MMG(Model):
             for data, labels in train_ds:
                 self.train_step(data, labels)
 
+    
