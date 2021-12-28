@@ -11,7 +11,7 @@ frame 1 ====> image 704
 class gt():
     def __init__(self):
         col=["cam1 : x","cam1 : y","cam2 : x","cam2 : y","cam3 : x","cam3 : y"]
-        cwd = os.path.abspath('../dataset')
+        cwd = os.path.abspath('../../data/Campus/')
         # Données 2D
         self.data_actor1= pd.read_csv(cwd+'/personne1.txt',sep='\s+',names=col)
         self.data_actor2= pd.read_csv(cwd+'/personne2.txt',sep='\s+',names=col)
@@ -52,4 +52,3 @@ if __name__ == "__main__":
     print("Human center 2D: ", hc)
     hc3D=gt().get_human_center3D(frame,actor)
     print("Human center 3D: ", hc3D)
-
