@@ -2,10 +2,11 @@ import torch
 from torch import Tensor
 from poseresnet import *
 import yaml
-import os, pathlib
+import os, pickle
 from typing import Dict, Iterable, Callable
 from PIL import Image
 from torchvision import transforms
+import matplotlib.pyplot as plt
 
 class FeatureExtractor(nn.Module):
     def __init__(self, model: nn.Module, layers: Iterable[str]):
@@ -34,23 +35,36 @@ class dicttoclass:
                 val = dicttoclass(val)
             setattr(self, key, val)
 
-def get_features(featureExtractor, images, coords):
-    B, _, H, W = images.shape
+def get_coords(path='../../data/Campus/voxel_2d_human_centers.pkl'):
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+    a_file = open(file, "rb")
+    human_centers = pickle.load(a_file)
+    a_file.close()
+    return human_centers
+
+def get_features(featureExtractor, images, upsample_size, coords):
+    B = images.shape[0]
+    H, W = upsample_size
     output_deconv1 = torch.zeros([B, 256, H, W])
     output_deconv2 = torch.zeros([B, 256, H, W])
     features = featureExtractor(images)
     out_1 = features["deconv_layers.5"]
     out_2 = features["deconv_layers.8"]
     for i in range(B):
-        output_deconv1[i, :, :, :] = torch.nn.Upsample(size=(H, W))(out_1)
-        output_deconv2[i, :, :, :] = torch.nn.Upsample(size=(H, W))(out_2)
+        output_deconv1[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_1)
+        output_deconv2[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_2)
     return output_deconv1, output_deconv2
 
-if __name__ == "__main__":
+def main():
     cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/cfg.yaml')
-    img = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/CampusSeq1/Camera0/campus4-c0-00385.png')
+    data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/CampusSeq1')
     cfg = yaml.safe_load(open(cfg_path))
     cfg = dicttoclass(cfg)
+    coords = get_coords()
+    for frame, poses in coords.items():
+        for camera, 
+
+if __name__ == "__main__":
     model = get_pose_net(cfg, False)
     input_image = Image.open(img)
     preprocess = transforms.Compose([
@@ -60,10 +74,14 @@ if __name__ == "__main__":
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     input_tensor = preprocess(input_image)
+    print(input_tensor.shape)
     input_batch = input_tensor.unsqueeze(0)
     
     posenet_features = FeatureExtractor(model, layers=['deconv_layers.5','deconv_layers.8'])
-    features = get_features(posenet_features, input_batch, 0)
-    print(features)
+    output_deconv1, output_deconv2 = get_features(posenet_features, input_batch, [256, 380],0)
+    for key, value in coords.items():
+        print("key:", key)
+        print("value", value)
+    
     
         
