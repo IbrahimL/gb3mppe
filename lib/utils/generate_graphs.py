@@ -7,6 +7,7 @@ from typing import Dict, Iterable, Callable
 from PIL import Image
 from torchvision import transforms
 import matplotlib.pyplot as plt
+import numpy as np
 
 class FeatureExtractor(nn.Module):
     def __init__(self, model: nn.Module, layers: Iterable[str]):
@@ -42,6 +43,43 @@ def get_coords(path='../../data/Campus/voxel_2d_human_centers.pkl'):
     a_file.close()
     return human_centers
 
+def save_args(args, path, save_name, verbose=False):
+    if not isinstance(args, dict):
+        raise TypeError('Parameters to be saved in {:} as {:}.json must be dict type'.format(path, save_name))
+
+    # Some parsing
+    if 'self' in args:
+        del args['self']
+
+    # If path doesn't exist create it
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    save_path = os.path.join(path, save_name + '.pkl')
+    if not os.path.exists(save_path):
+        with open(save_path, 'wb') as fp:
+            pickle.dump(args, fp)
+            if verbose:
+                print('pkl saved: <{: <23} \t at: {:}>'.format(save_name, path))
+                    
+    if os.path.exists(save_path):
+        if os.path.getsize(save_path) > 0: 
+            with open(save_path, "rb") as file:
+                data: dict = pickle.load(file)
+            if not args.items() <= data.items():
+                data.update(args)
+                args = data
+                with open(save_path, 'wb') as fp:
+                    pickle.dump(args, fp)
+                    if verbose:
+                        print('pkl saved: <{: <23} \t at: {:}>'.format(save_name, path))
+        else:
+            with open(save_path, 'wb') as fp:
+                #print(args)
+                pickle.dump(args, fp)
+                if verbose:
+                    print('pkl saved: <{: <23} \t at: {:}>'.format(save_name, path))
+
 def get_features(featureExtractor, images, upsample_size, coords):
     B = images.shape[0]
     H, W = upsample_size
@@ -50,13 +88,12 @@ def get_features(featureExtractor, images, upsample_size, coords):
     features = featureExtractor(images)
     out_1 = features["deconv_layers.5"]
     out_2 = features["deconv_layers.8"]
-    print(coords)
     for i in range(B):
         output_deconv1[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_1)
         output_deconv2[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_2)
     return output_deconv1[:, :, int(coords[1]), int(coords[0])], output_deconv2[:, :, int(coords[1]), int(coords[0])]
 
-def main():
+def main(save=True):
     cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/cfg.yaml')
     data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/CampusSeq1')
     cfg = yaml.safe_load(open(cfg_path))
@@ -70,19 +107,30 @@ def main():
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     posenet_features = FeatureExtractor(model, layers=['deconv_layers.5','deconv_layers.8'])
+    save_path = os.path.join(data_path, "../")
     for frame, poses in coords.items():
+        output = {}
+        features_output = []
         for camera, pose in poses.items():
             zeros = "00000"
             _, frame_number = frame.split("_")
             frame_number_str = zeros[:5-len(frame_number)] + str(frame_number)
-            path_img = os.path.join(data_path, camera[:-2] + camera[-1], 'campus4-c'+camera[-1]+'-'+frame_number_str+".png")
+            print(frame_number_str)
+            file_name = 'campus4-c' + camera[-1] + '-' + frame_number_str + ".png"
+            path_img = os.path.join(data_path, 
+                                    camera[:-2] + camera[-1], 
+                                    file_name)
             input_image = Image.open(path_img)
             input_tensor = preprocess(input_image)
             input_batch = input_tensor.unsqueeze(0)
             for coords in pose:
                 output_deconv1, output_deconv2 = get_features(posenet_features, input_batch, [288, 360], coords)
                 features = torch.cat([output_deconv1, output_deconv2], dim=-1)
-                print(features.shape)
+                features_output.append(features.detach().numpy())
+        output[file_name] = features_output
+        save_args(output, save_path, 'node_features', verbose=True) 
+    return output
+
             
 
 if __name__ == "__main__":
