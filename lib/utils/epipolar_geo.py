@@ -60,6 +60,12 @@ class epipolar_geometry():
             raise ValueError(f"Fm must be a (*, 3, 3) tensor. Got {Fm.shape}")
 
             ###########Acompleter
+        if pts1.shape == tf.TensorShape([2]) :
+            pts1=tf.reshape(pts1,shape=(1,2))
+            
+        if pts2.shape == tf.TensorShape([2]) :
+            pts2=tf.reshape(pts2,shape=(1,2))
+            
         if pts1.shape[1] == 2:
             pts1 = self.tf_convert_points_to_homogeneous(pts1)
 
@@ -140,11 +146,11 @@ class epipolar_geometry():
         '''
         Compute edge score between  two 2D projections, given the camera number of each projection
         m is a constant, its value is choosen empirically
-        !!! num_cam1 et num_cam2  prennent leurs valeurs dans 1,2,3
+        !!! num_cam1 et num_cam2  prennent leurs valeurs dans 0,1,2
         
         '''
-        P1t = self.p_matrix[num_cam1-1]
-        P2t = self.p_matrix[num_cam2-1]
+        P1t = self.p_matrix[num_cam1]
+        P2t = self.p_matrix[num_cam2]
         Fundamental = tf.constant([self.fundamental_matrix_from_projections(P1t,P2t).numpy()])
         d = self.tf_symmetrical_epipolar_distance(point1,point2,Fundamental,squared=True,eps = 1e-8)
         return tf.exp(-m*d)
@@ -156,18 +162,37 @@ if __name__ == "__main__":
     '''
     En prenant le même point dans deux vues différentes, le score devrait être égal à 1 :
     '''
-    import sys
-    sys.path.append(os.path.dirname(os.path.abspath('../dataset/gt_campus.py')))
-    from gt_campus import *
+    import pickle
+    import os
+    file = os.path.join(os.path.dirname(os.path.abspath('epipolar_geo.py')), 
+                        '../../data/Campus/voxel_2d_human_centers.pkl')
+ #   file = os.path.abspath('../../data/Campus/voxel_2d_human_centers.pkl')
+    a_file = open(file, "rb")
+    human_centers = pickle.load(a_file)
+    a_file.close()
     
-    campus_gt=gt()
-    frame=10
-    actor1=2
-    actor2=2
-    camera1=1
-    camera2=3
-    pt1=tf.constant(gt().get_human_center(frame,actor1,camera1),shape=(1,2),dtype=tf.float32)
-    pt2=tf.constant(gt().get_human_center(frame,actor2,camera2),shape=(1,2),dtype=tf.float32)
+    '''
+    Les images vont de 704 à 1998
+    
+    '''
+    cameras= ['camera_0','camera_1','camera_2']
+    hc1 = human_centers['image_1004']['camera_0'][:]
+    hc2 = human_centers['image_1004']['camera_1'][:]
+    hc3 = human_centers['image_1004']['camera_2'][:]
+    
+    pt1=tf.constant(hc1,shape=hc1.shape,dtype=tf.float32)
+    pt2=tf.constant(hc2,shape=hc2.shape,dtype=tf.float32)
+    pt3=tf.constant(hc3,shape=hc3.shape,dtype=tf.float32)
+    
     # compute Edge attribute 
-    s=epipolar_geometry().edge_score(pt1,pt2,camera1,camera2,10).numpy()
-    print(s)
+    camera1=0
+    camera2=1
+    camera3=2
+    
+    edge1=epipolar_geometry().edge_score(pt1,pt2,camera1,camera2,10).numpy()
+    edge2=epipolar_geometry().edge_score(pt1,pt3,camera1,camera3,10).numpy()
+    edge3=epipolar_geometry().edge_score(pt2,pt3,camera2,camera3,10).numpy()
+    
+    print(edge1)
+    print(edge2)
+    print(edge3)
