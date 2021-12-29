@@ -11,5 +11,20 @@ Les images vont de 704 à 1998
 
 '''
 # exemple
-print(human_centers['image_704'])
+print('Voxel pose \n',human_centers['image_704'])
+# la ya trois personnes d'où les 3 vecturs (x,y) pr chacune des cameras
+
+
+
+file_GT = os.path.abspath('../../data/Campus/GT_2d_human_centers.pkl')
+a_file = open(file_GT, "rb")
+human_centers_GT = pickle.load(a_file)
+a_file.close()
+
+'''
+Les images vont de 704 à 1998
+
+'''
+# exemple
+print('Ground Truth \n',human_centers_GT['image_704'])
 # la ya trois personnes d'où les 3 vecturs (x,y) pr chacune des cameras
