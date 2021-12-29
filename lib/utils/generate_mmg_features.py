@@ -93,7 +93,7 @@ def get_features(featureExtractor, images, upsample_size, coords):
         output_deconv2[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_2)
     return output_deconv1[:, :, int(coords[1]), int(coords[0])], output_deconv2[:, :, int(coords[1]), int(coords[0])]
 
-def main(save=True):
+def save_features(save=True):
     cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/cfg.yaml')
     data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/CampusSeq1')
     cfg = yaml.safe_load(open(cfg_path))
@@ -127,14 +127,18 @@ def main(save=True):
                 output_deconv1, output_deconv2 = get_features(posenet_features, input_batch, [288, 360], coords)
                 features = torch.cat([output_deconv1, output_deconv2], dim=-1)
                 features_output.append(features.detach().numpy())
-        output[file_name] = features_output
+            output[file_name] = features_output
         save_args(output, save_path, 'node_features', verbose=True) 
     return output
 
             
 
 if __name__ == "__main__":
-    main()
+    #main()
+    load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/node_features.pkl')
+    with open(load_path, "rb") as file:
+        data: dict = pickle.load(file)
+        print(data["campus4-c0-01615.png"])
     
     
         
