@@ -50,10 +50,11 @@ def get_features(featureExtractor, images, upsample_size, coords):
     features = featureExtractor(images)
     out_1 = features["deconv_layers.5"]
     out_2 = features["deconv_layers.8"]
+    print(coords)
     for i in range(B):
         output_deconv1[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_1)
         output_deconv2[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_2)
-    return output_deconv1, output_deconv2
+    return output_deconv1[:, :, int(coords[1]), int(coords[0])], output_deconv2[:, :, int(coords[1]), int(coords[0])]
 
 def main():
     cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/cfg.yaml')
@@ -61,27 +62,31 @@ def main():
     cfg = yaml.safe_load(open(cfg_path))
     cfg = dicttoclass(cfg)
     coords = get_coords()
-    for frame, poses in coords.items():
-        for camera, 
-
-if __name__ == "__main__":
     model = get_pose_net(cfg, False)
-    input_image = Image.open(img)
     preprocess = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-    input_tensor = preprocess(input_image)
-    print(input_tensor.shape)
-    input_batch = input_tensor.unsqueeze(0)
-    
     posenet_features = FeatureExtractor(model, layers=['deconv_layers.5','deconv_layers.8'])
-    output_deconv1, output_deconv2 = get_features(posenet_features, input_batch, [256, 380],0)
-    for key, value in coords.items():
-        print("key:", key)
-        print("value", value)
+    for frame, poses in coords.items():
+        for camera, pose in poses.items():
+            zeros = "00000"
+            _, frame_number = frame.split("_")
+            frame_number_str = zeros[:5-len(frame_number)] + str(frame_number)
+            path_img = os.path.join(data_path, camera[:-2] + camera[-1], 'campus4-c'+camera[-1]+'-'+frame_number_str+".png")
+            input_image = Image.open(path_img)
+            input_tensor = preprocess(input_image)
+            input_batch = input_tensor.unsqueeze(0)
+            for coords in pose:
+                output_deconv1, output_deconv2 = get_features(posenet_features, input_batch, [288, 360], coords)
+                features = torch.cat([output_deconv1, output_deconv2], dim=-1)
+                print(features.shape)
+            
+
+if __name__ == "__main__":
+    main()
     
     
         

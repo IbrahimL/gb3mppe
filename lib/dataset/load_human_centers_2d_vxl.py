@@ -1,7 +1,7 @@
 import pickle
 import os
 
-file = os.path.abspath('../../data/Campus/voxel_2d_human_centers.pkl')
+file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../data/Campus/voxel_2d_human_centers.pkl')
 a_file = open(file, "rb")
 human_centers = pickle.load(a_file)
 a_file.close()
@@ -16,7 +16,7 @@ print('Voxel pose \n',human_centers['image_704'])
 
 
 
-file_GT = os.path.abspath('../../data/Campus/GT_2d_human_centers.pkl')
+file_GT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../data/Campus/GT_2d_human_centers.pkl')
 a_file = open(file_GT, "rb")
 human_centers_GT = pickle.load(a_file)
 a_file.close()
