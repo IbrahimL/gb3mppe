@@ -129,9 +129,7 @@ def save_features(save=True):
                 features_output.append(features.detach().numpy())
             output[file_name] = features_output
         save_args(output, save_path, 'node_features', verbose=True) 
-    return output
-
-            
+    return output            
 
 if __name__ == "__main__":
     #main()
