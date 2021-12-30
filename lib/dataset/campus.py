@@ -25,15 +25,12 @@ class Campus:
     def _generate_graphs(self):
         cameras = self._get_feat_dict()
         node_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, 512])
-        adjacency = np.ones([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons])
+        adjacency = np.ones([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras])
         edge_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras, 1])
         for i in range(self.n_samples):
             for j in range(self.n_cameras):
                 for k, feats in enumerate(cameras[j][i]):
-                    node_features[i, j*self.n_cameras + k, :] = feats
-                    #adjacency[] = ??????
-                    # TODO - calculate edge_features
-                    #edge_features[] = ????
+                    node_features[i, k, :] = feats[0]
         node_features = tf.convert_to_tensor(node_features)
         adjacency = tf.convert_to_tensor(adjacency)
         edge_features = tf.convert_to_tensor(edge_features)
@@ -43,10 +40,8 @@ class Campus:
 if __name__ == "__main__":
     campus_dataset = Campus('../../data/Campus/node_features.pkl')
     camera_0, camera_1, camera_2 = campus_dataset._get_feat_dict()
-    print(len(camera_0))
-    print(len(camera_1))
-    print(len(camera_2))
     node_features, adjacency, edge_features = campus_dataset._generate_graphs()
     print(node_features.shape)
+    print(node_features[0, 0, :])
 
     
