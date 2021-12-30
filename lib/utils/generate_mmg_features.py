@@ -93,9 +93,10 @@ def get_features(featureExtractor, images, upsample_size, coords):
         output_deconv2[i, :, :, :] = torch.nn.Upsample(size=[H, W])(out_2)
     return output_deconv1[:, :, int(coords[1]), int(coords[0])], output_deconv2[:, :, int(coords[1]), int(coords[0])]
 
-def save_features(save=True):
-    cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/cfg.yaml')
-    data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/CampusSeq1')
+def save_features(save=False):
+    cfg_path = '/home/spi-2017-12/Bureau/mla_proj2/gb3mppe6/data/Campus/cfg.yaml'
+ #   data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/CampusSeq1')
+    data_path='/home/spi-2017-12/Bureau/mla_proj2/gb3mppe6/data/Campus/CampusSeq1'
     cfg = yaml.safe_load(open(cfg_path))
     cfg = dicttoclass(cfg)
     coords = get_coords()
@@ -108,10 +109,15 @@ def save_features(save=True):
     ])
     posenet_features = FeatureExtractor(model, layers=['deconv_layers.5','deconv_layers.8'])
     save_path = os.path.join(data_path, "../")
+    k=0
+
+    dic={}
     for frame, poses in coords.items():
+        k+=1
         output = {}
         features_output = []
         for camera, pose in poses.items():
+            #print(camera)
             zeros = "00000"
             _, frame_number = frame.split("_")
             frame_number_str = zeros[:5-len(frame_number)] + str(frame_number)
@@ -123,20 +129,26 @@ def save_features(save=True):
             input_image = Image.open(path_img)
             input_tensor = preprocess(input_image)
             input_batch = input_tensor.unsqueeze(0)
+            features_output=[]
             for coords in pose:
                 output_deconv1, output_deconv2 = get_features(posenet_features, input_batch, [288, 360], coords)
-                features = torch.cat([output_deconv1, output_deconv2], dim=-1)
+                features = torch.cat([output_deconv1, output_deconv2], dim=-1)[0]
                 features_output.append(features.detach().numpy())
             output[file_name] = features_output
-        save_args(output, save_path, 'node_features', verbose=True) 
-    return output            
+        #save_args(output, save_path, 'node_features_test2', verbose=True) 
+            dic.update({str(file_name) : features_output})
+
+    # save
+    if save :
+        a_file = open(save_path+'node_features.pkl', "wb")
+        pickle.dump(dic, a_file)
+        a_file.close()   
 
 if __name__ == "__main__":
-    #main()
-    load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/node_features.pkl')
-    with open(load_path, "rb") as file:
-        data: dict = pickle.load(file)
-        print(data["campus4-c0-01615.png"])
+    save_features(True)
+    # load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/node_features.pkl')
+    # with open(load_path, "rb") as file:
+    #     data: dict = pickle.load(file)
+    #     print(data["campus4-c0-01615.png"])
     
-    
-        
+
