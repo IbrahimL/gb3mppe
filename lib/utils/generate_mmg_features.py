@@ -115,7 +115,6 @@ def save_features(save=True):
             zeros = "00000"
             _, frame_number = frame.split("_")
             frame_number_str = zeros[:5-len(frame_number)] + str(frame_number)
-            print(frame_number_str)
             file_name = 'campus4-c' + camera[-1] + '-' + frame_number_str + ".png"
             path_img = os.path.join(data_path, 
                                     camera[:-2] + camera[-1], 
@@ -128,15 +127,15 @@ def save_features(save=True):
                 features = torch.cat([output_deconv1, output_deconv2], dim=-1)
                 features_output.append(features.detach().numpy())
             output[file_name] = features_output
-        save_args(output, save_path, 'node_features', verbose=True) 
+            save_args(output, save_path, 'node_features', verbose=True) 
     return output            
 
 if __name__ == "__main__":
-    #main()
-    load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/node_features.pkl')
-    with open(load_path, "rb") as file:
-        data: dict = pickle.load(file)
-        print(data["campus4-c0-01615.png"])
+    save_features()
+    #load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/node_features.pkl')
+    #with open(load_path, "rb") as file:
+    #    data: dict = pickle.load(file)
+    #    print(data["campus4-c0-01615.png"])
     
     
         
