@@ -145,10 +145,16 @@ def save_features(save=False):
         a_file.close()   
 
 if __name__ == "__main__":
-    save_features(True)
+    save_features(False)
     # load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../data/Campus/node_features.pkl')
     # with open(load_path, "rb") as file:
     #     data: dict = pickle.load(file)
     #     print(data["campus4-c0-01615.png"])
     
-
+    
+    file = os.path.join(os.path.dirname(os.path.abspath('epipolar_geo.py')), 
+                        '../../data/Campus/edge_features.pkl')
+    #   file = os.path.abspath('../../data/Campus/voxel_2d_human_centers.pkl')
+    a_file = open(file, "rb")
+    human_centers = pickle.load(a_file)
+    a_file.close()
