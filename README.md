@@ -20,6 +20,7 @@ We train and evaluate our model on the **[Campus](http://campar.in.tum.de/Chair/
 
 
 The directory tree should look like this:
+
 ```
 ${gb3mppe}
 |-- data
@@ -44,8 +45,7 @@ ${gb3mppe}
     |       |-- Camera2
     |       |-- actorsGT.mat
     |       |-- calibration_campus.json
-    |       |-- pred_campus_maskrcnn_hrnet_coco.pkl
-    
-    ```
-    here's the [link](http://campar.cs.tum.edu/files/belagian/multihuman/CampusSeq1.tar.bz2) to donwload CampusSeq1 .
+    |       |-- pred_campus_maskrcnn_hrnet_coco.pkl ```
+
+    here's the [link]( http://campar.cs.tum.edu/files/belagian/multihuman/CampusSeq1.tar.bz2 )  to donwload CampusSeq1 .
 
