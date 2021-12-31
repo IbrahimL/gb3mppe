@@ -10,8 +10,8 @@ Size Wu, Sheng Jin, Wentao Liu, Lei Bai, Chen Qian, Dong Liu, Wanli Ouyang
 
 1. Clone this repo, and we'll call the directory that you cloned multiview-multiperson-pose as ${gb3mppe}.
 2. Install dependencies.
-
-# Data preparation for MMG
+# MMG : Multi-view Matching Graph Module
+## Data preparation for MMG
 We train and evaluate our model on the **[Campus](http://campar.in.tum.de/Chair/MultiHumanPose)**.
 1. We processed the ground-truth and the 2D pose estimated by [Hanyue Tu, Chunyu Wang, Wenjun Zeng](https://github.com/microsoft/voxelpose-pytorch) to our format.
 2. We also created dataset in form of python dictionnaries (pkl files) to store the node features and the edge features which ar the inputs of our MMG model.
@@ -50,3 +50,12 @@ ${gb3mppe}
 ```
 here's the [link]( http://campar.cs.tum.edu/files/belagian/multihuman/CampusSeq1.tar.bz2 )  to donwload CampusSeq1 .
 
+
+# CRG : Center Refinement Graph
+
+We also implementred the CRG's architecture, but unfortunately, we did not have enough time to generate the node and edge features to train the model. However, you can test the implementation on a dummy dataset that we created, where inputs have the same shape than the real features.
+To do that, you can run this [notebook test](https://github.com/IbrahimL/gb3mppe/blob/8020d4bda261a91b7053d0b524e5b80bb7b3815f/test/test_architectures_fake_data.ipynb)
+
+# PRG : Pose Regression Graph
+Like CRG, you can test the PRG's implementation on a dummy dataset that we created, where inputs have the same shape than the real features.
+To do that, you can run the [same notebook](https://github.com/IbrahimL/gb3mppe/blob/8020d4bda261a91b7053d0b524e5b80bb7b3815f/test/test_architectures_fake_data.ipynb)
