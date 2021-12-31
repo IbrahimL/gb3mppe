@@ -48,22 +48,9 @@ ${gb3mppe}
             |-- pred_campus_maskrcnn_hrnet_coco.pkl
 |-- lib
     |-- dataset
-        |-- campus.py
-        |-- Dummy.py
-        |-- gt_campus.py
-        |-- load_campus_pose.py
-        |-- load_huamn_centers_2d_vxl.py
-        |-- generate_human_centers_dataset.ipynb
     |-- gt_coord_2D
-        |-- ground_truth.ipynb.ipynb
     |-- models
-        |-- CRG.pyy
-        |-- layers.py
-        |-- PRG.pyy
-        |-- MMG.py
-    |-- utils
-        |-- campuse_pose_voxel.pkl
-              
+    |-- utils              
 |-- test
 ```
 here's the [link]( http://campar.cs.tum.edu/files/belagian/multihuman/CampusSeq1.tar.bz2 )  to donwload CampusSeq1 .
