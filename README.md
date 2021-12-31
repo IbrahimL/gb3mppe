@@ -25,28 +25,46 @@ The directory tree should look like this:
 ${gb3mppe}
 |-- data
     |-- campus
-    |   |-- campuse_pose_voxel.pkl
-    |   |-- cfg.yaml
-    |   |-- Camera4
-    |   |-- GT_2d_human_centers.pkl
-    |   |-- GT_3d_human_centers.pkl
-    |   |-- node_features.pkl
-    |   |-- personne1.txt
-    |   |-- personne1_3D.txt
-    |   |-- personne2.txt
-    |   |-- personne2_3D.txt
-    |   |-- personne3.txt
-    |   |-- personne3_3D.txt
-    |   |-- voxel_2d_human_centers.pkl
-    |   |-- voxel_3d_human_centers.pkl
-    |   |-- CampusSeq1
-    |       |-- Camera0
-    |       |-- Camera1
-    |       |-- Camera2
-    |       |-- actorsGT.mat
-    |       |-- calibration_campus.json
-    |       |-- pred_campus_maskrcnn_hrnet_coco.pkl
-
+        |-- campuse_pose_voxel.pkl
+        |-- cfg.yaml
+        |-- Camera4
+        |-- GT_2d_human_centers.pkl
+        |-- GT_3d_human_centers.pkl
+        |-- node_features.pkl
+        |-- personne1.txt
+        |-- personne1_3D.txt
+        |-- personne2.txt
+        |-- personne2_3D.txt
+        |-- personne3.txt
+        |-- personne3_3D.txt
+        |-- voxel_2d_human_centers.pkl
+        |-- voxel_3d_human_centers.pkl
+        |-- CampusSeq1
+            |-- Camera0
+            |-- Camera1
+            |-- Camera2
+            |-- actorsGT.mat
+            |-- calibration_campus.json
+            |-- pred_campus_maskrcnn_hrnet_coco.pkl
+|-- lib
+    |-- dataset
+        |-- campus.py
+        |-- Dummy.py
+        |-- gt_campus.py
+        |-- load_campus_pose.py
+        |-- load_huamn_centers_2d_vxl.py
+        |-- generate_human_centers_dataset.ipynb
+    |-- gt_coord_2D
+        |-- ground_truth.ipynb.ipynb
+    |-- models
+        |-- CRG.pyy
+        |-- layers.py
+        |-- PRG.pyy
+        |-- MMG.py
+    |-- utils
+        |-- campuse_pose_voxel.pkl
+              
+|-- test
 ```
 here's the [link]( http://campar.cs.tum.edu/files/belagian/multihuman/CampusSeq1.tar.bz2 )  to donwload CampusSeq1 .
 
@@ -57,5 +75,5 @@ We also implementred the CRG's architecture, but unfortunately, we did not have 
 To do that, you can run this [notebook test](https://github.com/IbrahimL/gb3mppe/blob/8020d4bda261a91b7053d0b524e5b80bb7b3815f/test/test_architectures_fake_data.ipynb)
 
 # PRG : Pose Regression Graph
-Like CRG, you can test the implementation on a dummy dataset that we created, where inputs have the same shape than the real features.
+Like CRG, you can test the PRG's implementation on a dummy dataset that we created, where inputs have the same shape than the real features.
 To do that, you can run the [same notebook](https://github.com/IbrahimL/gb3mppe/blob/8020d4bda261a91b7053d0b524e5b80bb7b3815f/test/test_architectures_fake_data.ipynb)
