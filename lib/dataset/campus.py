@@ -33,10 +33,10 @@ class Campus:
             i = int(frame_n) - 704
             for camera, dict_1 in dict_0.items():
                 _, camera_n = camera.split("_")
-                j = int(camera_n)
+                j = int(camera_n) - 1
                 for node, feature in dict_1.items():
                     _, node_n = node.split("_")
-                    k = int(node_n) 
+                    k = int(node_n) - 1
                     for l, f in enumerate(feature):
                         edge_features[i, j*self.n_cameras + k, l, 0] = f
                         #edge_features[i, k, l, 0] = f
@@ -46,7 +46,7 @@ class Campus:
         cameras = self._get_node_feat_dict()
         node_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, 512])
         adjacency = np.ones([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras])
-        edge_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras, 1])
+        edge_features = self._get_edge_feat_dict()
         for i in range(self.n_samples):
             for j in range(self.n_cameras):
                 for k, feats in enumerate(cameras[j][i]):
