@@ -4,16 +4,17 @@ import pickle, os
 import numpy as np
 
 class Campus:
-    def __init__(self, feature_path):
+    def __init__(self, node_features_path, edge_features_path):
         super().__init__()
         
-        self.feature_path = feature_path
+        self.node_features_path = node_features_path
+        self.edge_features_path = edge_features_path
         self.max_n_persons = 3
         self.n_cameras = 3
         self.n_samples = 1295
     
-    def _get_feat_dict(self):
-        load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.feature_path)
+    def _get_node_feat_dict(self):
+        load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.node_features_path)
         with open(load_path, "rb") as file:
             data = pickle.load(file)
         camera_0 = [value for key, value in data.items() if 'c0' in key.lower()]
@@ -22,8 +23,27 @@ class Campus:
         self.n_samples = len(camera_0)
         return camera_0, camera_1, camera_2
     
+    def _get_edge_feat_dict(self):
+        load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.edge_features_path)
+        edge_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras, 1])
+        with open(load_path, "rb") as file:
+            data = pickle.load(file)
+        for frame, dict_0 in data.items():
+            _, frame_n = frame.split("_")
+            i = int(frame_n) - 704
+            for camera, dict_1 in dict_0.items():
+                _, camera_n = camera.split("_")
+                j = int(camera_n)
+                for node, feature in dict_1.items():
+                    _, node_n = node.split("_")
+                    k = int(node_n) 
+                    for l, f in enumerate(feature):
+                        edge_features[i, j*self.n_cameras + k, l, 0] = f
+                        #edge_features[i, k, l, 0] = f
+        return edge_features
+    
     def _generate_graphs(self):
-        cameras = self._get_feat_dict()
+        cameras = self._get_node_feat_dict()
         node_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, 512])
         adjacency = np.ones([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras])
         edge_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras, 1])
@@ -38,10 +58,10 @@ class Campus:
         
 
 if __name__ == "__main__":
-    campus_dataset = Campus('../../data/Campus/node_features.pkl')
-    camera_0, camera_1, camera_2 = campus_dataset._get_feat_dict()
+    campus_dataset = Campus('../../data/Campus/node_features.pkl', '../../data/Campus/edge_features.pkl')
+    camera_0, camera_1, camera_2 = campus_dataset._get_node_feat_dict()
     node_features, adjacency, edge_features = campus_dataset._generate_graphs()
     print(node_features.shape)
-    print(node_features[0, 0, :])
+    campus_dataset._get_edge_feat_dict()
 
     
