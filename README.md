@@ -45,5 +45,7 @@ ${gb3mppe}
     |       |-- actorsGT.mat
     |       |-- calibration_campus.json
     |       |-- pred_campus_maskrcnn_hrnet_coco.pkl
+    
     ```
+    here's the [link](http://campar.cs.tum.edu/files/belagian/multihuman/CampusSeq1.tar.bz2) to donwload CampusSeq1 .
 
