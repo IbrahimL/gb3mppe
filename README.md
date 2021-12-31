@@ -22,7 +22,6 @@ We train and evaluate our model on the **[Campus](http://campar.in.tum.de/Chair/
 The directory tree should look like this:
 
 ```
-`
 ${gb3mppe}
 |-- data
     |-- campus
