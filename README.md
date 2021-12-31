@@ -20,7 +20,7 @@ We train and evaluate our model on the **[Campus](http://campar.in.tum.de/Chair/
 
 
 The directory tree should look like this:
-
+```
 ${gb3mppe}
 |-- data
     |-- campus
@@ -36,6 +36,8 @@ ${gb3mppe}
     |   |-- personne2_3D.txt
     |   |-- personne3.txt
     |   |-- personne3_3D.txt
+    |   |-- voxel_2d_human_centers.pkl
+    |   |-- voxel_3d_human_centers.pkl
     |   |-- CampusSeq1
     |       |-- Camera0
     |       |-- Camera1
@@ -43,3 +45,5 @@ ${gb3mppe}
     |       |-- actorsGT.mat
     |       |-- calibration_campus.json
     |       |-- pred_campus_maskrcnn_hrnet_coco.pkl
+    ```
+
