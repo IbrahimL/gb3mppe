@@ -44,13 +44,13 @@ class RRG(Model):
         EdgeConv1_ouput = x1
         x1 = self.EdgeConv_hid2(adjacency, x1)
         EdgeConv2_ouput = x1
-        x1 = add([x1,EdgeConv1_ouput])
-        x1 = self.EdgeConv_hid3(x1)
-        x1 = add([x1,EdgeConv2_ouput])
+        x1 = self.concatenate_layer([x1,EdgeConv1_ouput])
+        x1 = self.EdgeConv_hid3(adjacency,x1)
+        x1 = self.concatenate_layer([x1,EdgeConv2_ouput])
         x2 = x1
-        x1 = self.linear_out1(x1) 
+        x1 = self.linear_hid4(x1) 
         x1 = self.linear_out1(x1)   
-        x2 = self.linear_out2(x2)  
+        x2 = self.linear_hid5(x2)  
         x2 = self.linear_out2(x2)
         return x1,x2
 
