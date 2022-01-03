@@ -24,12 +24,12 @@ def train(model, data, gt_data, EPOCHS = 10):
         print("epoch {}, loss={}".format(epoch, loss))
         loss_t.append(loss)
     return loss_t
-
-def main():
+    
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train the mmg model.')
-    parser.add_argument('n_epochs', metavar='n_epochs', type=int, default=10,
+    parser.add_argument('n_epochs', type=int, default=10,
                     help='number of training epochs')
-    parser.add_argument('show', metavar='show', type=bool, default=False,
+    parser.add_argument('show', type=bool, default=False,
                     help='show the training curve')
     args = parser.parse_args()
     show = args.show
@@ -68,7 +68,5 @@ def main():
         ax.set_xlabel("epoch")
         ax.set_ylabel("loss")
         ax.set_title("Training curve")
+        ax.grid()
         plt.show()
-    
-if __name__ == "__main__":
-    loss = main()
