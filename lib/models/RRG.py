@@ -1,3 +1,6 @@
+"""
+THIS IS A WORK IN PROGRESS (INCOMPLETE)
+"""
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras import layers

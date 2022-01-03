@@ -1,3 +1,7 @@
+"""
+THIS IS A WORK IN PROGRESS (INCOMPLETE)
+"""
+
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras import layers
@@ -9,6 +13,7 @@ from .layers import MLP
 
 class CRG(Model):
     '''
+    Implementation of the Center Refinement Graph Module using tensorflow (https://arxiv.org/pdf/2109.05885.pdf)
     '''
     def __init__(self, mlp_dim, hidden_dim, output_dim):
         super(CRG, self).__init__()

@@ -11,8 +11,10 @@ from tensorflow_graphics.geometry.convolution import utils
 from tensorflow.python.ops.gen_math_ops import Add
 from tensorflow.keras import backend as K
 
-#https://github.com/tensorflow/graphics/blob/master/tensorflow_graphics/geometry/convolution/graph_convolution.py   
 def edge_convolution_E_template(data, neighbors, edges_features, sizes, edge_function, reduction, edge_function_kwargs, name="Layer_E"):
+  """[implementation of the edgeconv-e layer using the edgeconv layer defined in:
+  #https://github.com/tensorflow/graphics/blob/master/tensorflow_graphics/geometry/convolution/graph_convolution.py]
+  """
   with tf.name_scope(name):
     data = tf.convert_to_tensor(value=data)
     edges_features = tf.compat.v1.convert_to_tensor_or_sparse_tensor(value=edges_features)
@@ -70,8 +72,6 @@ def edge_convolution_E_template(data, neighbors, edges_features, sizes, edge_fun
     return features
 
 class MLP(Model):
-    '''
-    '''
     def __init__(self, hidden_dim, output_dim):
         super(MLP, self).__init__()
         self.linear_hid1 = layers.Dense(hidden_dim, activation='relu')
@@ -85,15 +85,28 @@ class MLP(Model):
         return x
 
 class EdgeConv(Layer):
+    """
+    Edgeconv layer as defined in (https://arxiv.org/pdf/2109.05885.pdf)
+    """
     def __init__(self, h_theta):
-        '''
-        '''
+        """[init method]
+
+        Args:
+          h_theta: tensorflow model that is used to create the feature map from the inputs
+        """
         super(EdgeConv, self).__init__()
         self.h_theta = h_theta
 
     def _aggregate(self, x_v, x_vp):
-        '''
-        '''
+        """[calculate the feature map for the edge convolution]
+
+        Args:
+          x_v: tf tensor of shape (1, C) containing node features where C is the number of features
+          x_vp: tf tensor of shape (1, C) neighbor node features
+
+        Returns:
+          output: tf tensor of shape (1, C') of new features
+        """
         return self.h_theta(tf.concat([x_v, x_vp-x_v], -1))
     
     def call(self, Adjacency, node_features):
@@ -108,15 +121,29 @@ class EdgeConv(Layer):
 
 
 class EdgeConvE(Layer):
-    '''
-    '''
+    """
+    Edgeconv-e layer as defined in (https://arxiv.org/pdf/2109.05885.pdf)
+    """
     def __init__(self, h_theta):
+        """[init method]
+
+        Args:
+          h_theta: tensorflow model that is used to create the feature map from the inputs
+        """
         super(EdgeConvE, self).__init__()
         self.h_theta = h_theta
         
     def _aggregate(self, x_v, x_vp, e_v_vp):
-        '''
-        '''
+        """[calculate the feature map for the edge convolution]
+
+        Args:
+          x_v: tf tensor of shape (1, C) containing node features where C is the number of features
+          x_vp: tf tensor of shape (1, C) neighbor node features
+          e_v_vp: tf tensor of shape (1, E) of edge features between the two nodes (E is the number of features)
+
+        Returns:
+          output: tf tensor of shape (1, C') of new features
+        """
         return self.h_theta(tf.concat([x_v, x_vp-x_v, e_v_vp], -1))
     
     def call(self, Adjacency, node_features, edge_attributes):
@@ -131,6 +158,9 @@ class EdgeConvE(Layer):
     
 
 class GraphMaxPool(Layer):
+    """
+    THIS IS A WORK IN PROGRESS (INCOMPLETE)
+    """
     def __init__(self):
         super(GraphMaxPool, self).__init__()
         
