@@ -11,7 +11,9 @@ Size Wu, Sheng Jin, Wentao Liu, Lei Bai, Chen Qian, Dong Liu, Wanli Ouyang
 1. Clone this repo, and we'll call the directory that you cloned multiview-multiperson-pose as ${gb3mppe}.
 2. Install dependencies.
 # MMG : Multi-view Matching Graph Module
+
 <img src="data/dee.png" width="600"/>
+
 ## Data preparation for MMG
 We train and evaluate our model on the **[Campus](http://campar.in.tum.de/Chair/MultiHumanPose)**.
 1. We processed the ground-truth and the 2D pose estimated by [Hanyue Tu, Chunyu Wang, Wenjun Zeng](https://github.com/microsoft/voxelpose-pytorch) to our format.
