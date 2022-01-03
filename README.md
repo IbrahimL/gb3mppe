@@ -64,3 +64,10 @@ To do that, you can run this [notebook test](https://github.com/IbrahimL/gb3mppe
 # PRG : Pose Regression Graph
 Like CRG, you can test the PRG's implementation on a dummy dataset that we created, where inputs have the same shape than the real features.
 To do that, you can run the [same notebook](https://github.com/IbrahimL/gb3mppe/blob/8020d4bda261a91b7053d0b524e5b80bb7b3815f/test/test_architectures_fake_data.ipynb)
+
+# MMG Training:
+To train and visualize an MMG model on 400 samples from the campus dataset, run the following command by replacing "n_epochs" with the number of training epochs (integer) and "show" by whether to show the training curve or not (True or False).
+
+```
+python n_epochs show
+```
