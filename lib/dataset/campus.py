@@ -9,6 +9,7 @@ class Campus:
         
         self.node_features_path = node_features_path
         self.edge_features_path = edge_features_path
+        self.gt_path = gt_path
         self.max_n_persons = 3
         self.n_cameras = 3
         self.n_samples = 1295
@@ -62,7 +63,7 @@ class Campus:
         return edge_features, adjacency
     
     def _generate_gt_graphs(self):
-        load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.edge_features_path)
+        load_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.gt_path)
         edge_features = np.zeros([self.n_samples, self.max_n_persons*self.n_cameras, self.max_n_persons*self.n_cameras, 1])
         with open(load_path, "rb") as file:
             data = pickle.load(file)
