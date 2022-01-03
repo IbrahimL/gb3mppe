@@ -15,7 +15,7 @@ Size Wu, Sheng Jin, Wentao Liu, Lei Bai, Chen Qian, Dong Liu, Wanli Ouyang
 We train and evaluate our model on the **[Campus](http://campar.in.tum.de/Chair/MultiHumanPose)**.
 1. We processed the ground-truth and the 2D pose estimated by [Hanyue Tu, Chunyu Wang, Wenjun Zeng](https://github.com/microsoft/voxelpose-pytorch) to our format.
 2. We also created dataset in form of python dictionnaries (pkl files) to store the node features and the edge features which ar the inputs of our MMG model.
-3. You can download all these data from [here](https://drive.google.com/drive/folders/1Ck5ireXtLGGKFdgb5UJQe1spikul_O0K) and place it in gb3mppe/data/campus.
+3. You can download all these data from [here](https://drive.google.com/file/d/1ZeyehIh8TZkR6qAaUngoF3hdtTBpm9UK/view?usp=sharing) and place it in gb3mppe/data/campus.
 4. You can also try to generate the node and edge features by runing [generate_mmg_features.py](https://github.com/IbrahimL/gb3mppe/blob/12dd1b94396ccc0328c1b8a08882a0de45ec954d/lib/utils/generate_mmg_features.py) and [generate_edge_features.py](https://github.com/IbrahimL/gb3mppe/blob/12dd1b94396ccc0328c1b8a08882a0de45ec954d/lib/utils/generate_edge_features.py) resp. , the node features are extracted from feature maps that ar constructed with [2D pose estimator trained on COCO](https://github.com/microsoft/voxelpose-pytorch). These feature maps are the output of the two last deconv layers of the prerained PoseResnet.
 
 

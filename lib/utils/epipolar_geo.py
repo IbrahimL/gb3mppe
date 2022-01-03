@@ -1,5 +1,11 @@
+# ------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+# ------------------------------------------------------------------------------
 import tensorflow as tf
 import os
+import numpy as np
+
 
 
 class epipolar_geometry():
@@ -143,17 +149,121 @@ class epipolar_geometry():
         return tf.reshape(F_vec,shape=(*P1.shape[:-2],3,3))
     
     def edge_score(self,point1,point2,num_cam1,num_cam2,m=10):
-        '''
-        Compute edge score between  two 2D projections, given the camera number of each projection
-        m is a constant, its value is choosen empirically
-        !!! num_cam1 et num_cam2  prennent leurs valeurs dans 0,1,2
-        
-        '''
-        P1t = self.p_matrix[num_cam1]
-        P2t = self.p_matrix[num_cam2]
-        Fundamental = tf.constant([self.fundamental_matrix_from_projections(P1t,P2t).numpy()])
-        d = self.tf_symmetrical_epipolar_distance(point1,point2,Fundamental,squared=True,eps = 1e-8)
-        return tf.exp(-m*d)
+            '''
+            Compute edge score between  two 2D projections, given the camera number of each projection
+            m is a constant, its value is choosen empirically
+            !!! num_cam1 et num_cam2  prennent leurs valeurs dans 0,1,2
+            
+            '''
+            P1t = self.p_matrix[num_cam1]
+            P2t = self.p_matrix[num_cam2]
+            Fundamental = tf.constant([self.fundamental_matrix_from_projections(P1t,P2t).numpy()])
+            d = self.tf_symmetrical_epipolar_distance(point1,point2,Fundamental,squared=True,eps = 1e-8)
+            return tf.exp(-m*d)
+
+    def tf_triangulate_points(
+        self, P1: tf.Tensor, P2: tf.Tensor, points1: tf.Tensor, points2: tf.Tensor
+        ) -> tf.Tensor:
+        r"""Reconstructs a bunch of points by triangulation.
+
+        Triangulates the 3d position of 2d correspondences between several images.
+        Reference: Internally it uses DLT method from Hartley/Zisserman 12.2 pag.312
+
+        The input points are assumed to be in homogeneous coordinate system and being inliers
+        correspondences. The method does not perform any robust estimation.
+
+        Args:
+            P1: The projection matrix for the first camera with shape :math:`(*, 3, 4)`.
+            P2: The projection matrix for the second camera with shape :math:`(*, 3, 4)`.
+            points1: The set of points seen from the first camera frame in the camera plane
+              coordinates with shape :math:`(*, N, 2)`.
+            points2: The set of points seen from the second camera frame in the camera plane
+              coordinates with shape :math:`(*, N, 2)`.
+
+        Returns:
+            The reconstructed 3d points in the world frame with shape :math:`(*, N, 3)`.
+
+        """
+        if not (len(P1.shape) >= 2 and P1.shape[-2:] == (3, 4)):
+            raise AssertionError(P1.shape)
+        if not (len(P2.shape) >= 2 and P2.shape[-2:] == (3, 4)):
+            raise AssertionError(P2.shape)
+        if len(P1.shape[:-2]) != len(P2.shape[:-2]):
+            raise AssertionError(P1.shape, P2.shape)
+        if not (len(points1.shape) >= 2 and points1.shape[-1] == 2):
+            raise AssertionError(points1.shape)
+        if not (len(points2.shape) >= 2 and points2.shape[-1] == 2):
+            raise AssertionError(points2.shape)
+        if len(points1.shape[:-2]) != len(points2.shape[:-2]):
+            raise AssertionError(points1.shape, points2.shape)
+        if len(P1.shape[:-2]) != len(points1.shape[:-2]):
+            raise AssertionError(P1.shape, points1.shape)
+
+        # allocate and construct the equations matrix with shape (*, 4, 4)
+
+        a = [points1.shape[0],points1.shape[1]]
+        b = [points2.shape[0],points2.shape[1]]
+        points_shape = max(a,b)
+
+        #points_shape = max(points1.shape, points2.shape)  # this allows broadcasting
+        X = tf.zeros(points_shape[:-1] + [4, 4])  #.type_as(points1)
+        temp = np.zeros(points_shape[:-1] + [4,4])
+
+
+        for i in range(4):
+            temp[:, 0, i] = points1[:, 0] * P1[ 2:3, i] - P1[ 0:1, i]
+            temp[:, 1, i] = points1[:, 1] * P1[ 2:3, i] - P1[ 1:2, i]
+            temp[:, 2, i] = points2[:, 0] * P2[ 2:3, i] - P2[ 0:1, i]
+            temp[:, 3, i] = points2[:, 1] * P2[ 2:3, i] - P2[ 1:2, i]
+
+        X = tf.convert_to_tensor(temp)
+
+        # 1. Solve the system Ax=0 with smallest eigenvalue
+        # 2. Return homogeneous coordinates
+
+        _, _, V = tf.linalg.svd(X)
+
+        points3d_h = V[..., -1]
+        points3d: tf.Tensor = self.tf_convert_points_from_homogeneous(points3d_h)
+        return points3d
+
+
+
+    def tf_convert_points_from_homogeneous(self, points, eps: float = 1e-8) :
+        r"""Function that converts points from homogeneous to Euclidean space.
+
+        Args:
+            points: the points to be transformed of shape :math:`(B, N, D)`.
+            eps: to avoid division by zero.
+
+        Returns:
+            the points in Euclidean space :math:`(B, N, D-1)`.
+
+        Examples:
+            >>> input = torch.tensor([[0., 0., 1.]])
+            >>> convert_points_from_homogeneous(input)
+            tensor([[0., 0.]])
+        """
+
+        if not tf.is_tensor(points):
+
+            raise TypeError(f"Input type is not a torch.Tensor. Got {type(points)}")
+
+        if len(points.shape) < 2:
+            raise ValueError(f"Input must be at least a 2D tensor. Got {points.shape}")
+
+        # we check for points at max_val
+        z_vec  = points[..., -1:]
+
+        # set the results of division by zeror/near-zero to 1.0
+        # follow the convention of opencv:
+        # https://github.com/opencv/opencv/pull/14411/files
+        mask = tf.abs(z_vec) > eps
+        scale = tf.where(mask, 1.0 / (z_vec + eps), tf.ones_like(z_vec))
+
+        return scale * points[..., :-1]
+
+
 
     
 
@@ -196,3 +306,25 @@ if __name__ == "__main__":
     print(edge1)
     print(edge2)
     print(edge3)
+
+    # Test de la fonction triangulate
+    tf.constant
+    P1t=tf.constant([[439.0,180.81,-26.946,185.95],[-5.3416,88.523,-450.95,1324],[0.0060594,0.99348,-0.11385,5.227]], shape=(1,3,4))
+    P2t=tf.constant([[162.36,-438.34,-17.508,3347.4],[73.3,-10.043,-443.34,1373.5],[0.99035,-0.047887,-0.13009,6.6849]], shape=(1,3,4))
+    pt3Dt = tf.constant([[2.9872, 4.0063, 0.1581]])
+    # passage en coord homogens (rajout d'un 1)
+    pt3D_ht=tf_convert_points_to_homogeneous(pt3Dt)
+    # projections
+    # camera 2
+    x2t=tf.matmul(P2t,tf.transpose(pt3D_ht, perm=(1,0)))
+    x2t=x2t/x2t[2]
+    # camera 1
+    x1t=tf.matmul(P1t,tf.transpose(pt3D_ht, perm=(1,0)))
+    x1t=x1t/x1t[2]
+    x1t = tf.transpose(x1t[:2],(1,0)).numpy()
+
+    test = epipolar_geometry().tf_triangulate_points(P1t,P2t,x1t,x1t)
+    print("Hello")
+    print(test)
+
+
