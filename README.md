@@ -69,5 +69,9 @@ To do that, you can run the [same notebook](https://github.com/IbrahimL/gb3mppe/
 To train and visualize an MMG model on 400 samples from the campus dataset, run the following command by replacing "n_epochs" with the number of training epochs (integer) and "show" by whether to show the training curve or not (True or False).
 
 ```
-python n_epochs show
+python main.py n_epochs show
+```
+example:
+```
+python main.py 10 True
 ```
